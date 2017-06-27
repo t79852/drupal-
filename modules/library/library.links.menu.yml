@@ -1,0 +1,6 @@
+# Library action menu items definition
+entity.library_action.collection:
+  title: 'Library action'
+  route_name: entity.library_action.collection
+  description: 'List Library action (bundles)'
+  parent: system.admin_structure
