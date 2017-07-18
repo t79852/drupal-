@@ -35,6 +35,13 @@ abstract class LocalTaxTypeBase extends TaxTypeBase implements LocalTaxTypeInter
   protected $chainRateResolver;
 
   /**
+   * The zones.
+   *
+   * @var \Drupal\commerce_tax\TaxZone[]
+   */
+  protected $zones;
+
+  /**
    * Constructs a new LocalTaxTypeBase object.
    *
    * @param array $configuration
@@ -77,6 +84,13 @@ abstract class LocalTaxTypeBase extends TaxTypeBase implements LocalTaxTypeInter
   /**
    * {@inheritdoc}
    */
+  public function shouldRound() {
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function applies(OrderInterface $order) {
     $store = $order->getStore();
     return $this->matchesAddress($store) || $this->matchesRegistrations($store);
@@ -89,6 +103,7 @@ abstract class LocalTaxTypeBase extends TaxTypeBase implements LocalTaxTypeInter
     $store = $order->getStore();
     $prices_include_tax = $store->get('prices_include_tax')->value;
     $matches_store_address = $this->matchesAddress($store);
+    $zones = $this->getZones();
     foreach ($order->getItems() as $order_item) {
       $customer_profile = $this->resolveCustomerProfile($order_item);
       if (!$customer_profile) {
@@ -128,7 +143,8 @@ abstract class LocalTaxTypeBase extends TaxTypeBase implements LocalTaxTypeInter
         $order_item->setAdjustments($adjustments);
       }
 
-      foreach ($rates as $source_id => $rate) {
+      foreach ($rates as $zone_id => $rate) {
+        $zone = $zones[$zone_id];
         $unit_price = $order_item->getUnitPrice();
         $rate_amount = $rate->getAmount()->getAmount();
         $tax_amount = $unit_price->multiply($rate_amount);
@@ -150,9 +166,9 @@ abstract class LocalTaxTypeBase extends TaxTypeBase implements LocalTaxTypeInter
 
         $order_item->addAdjustment(new Adjustment([
           'type' => 'tax',
-          'label' => $this->getDisplayLabel(),
+          'label' => $zone->getDisplayLabel(),
           'amount' => $negate ? $tax_amount->multiply('-1') : $tax_amount,
-          'source_id' => $source_id,
+          'source_id' => $this->entityId . '|' . $zone->getId() . '|' . $rate->getId(),
           'included' => !$negate && $this->isDisplayInclusive(),
         ]));
       }
@@ -233,7 +249,7 @@ abstract class LocalTaxTypeBase extends TaxTypeBase implements LocalTaxTypeInter
    *   The customer profile. Contains the address and tax number.
    *
    * @return \Drupal\commerce_tax\TaxRate[]
-   *   The tax rates.
+   *   The tax rates, keyed by tax zone ID.
    */
   protected function resolveRates(OrderItemInterface $order_item, ProfileInterface $customer_profile) {
     $rates = [];
@@ -241,8 +257,7 @@ abstract class LocalTaxTypeBase extends TaxTypeBase implements LocalTaxTypeInter
     foreach ($zones as $zone) {
       $rate = $this->chainRateResolver->resolve($zone, $order_item, $customer_profile);
       if (is_object($rate)) {
-        $source_id = $this->entityId . '|' . $zone->getId() . '|' . $rate->getId();
-        $rates[$source_id] = $rate;
+        $rates[$zone->getId()] = $rate;
       }
     }
     return $rates;
@@ -277,6 +292,13 @@ abstract class LocalTaxTypeBase extends TaxTypeBase implements LocalTaxTypeInter
    *   The summary form element.
    */
   protected function buildRateSummary() {
+    $zones = $this->getZones();
+    usort($zones, function ($a, $b) {
+      /** @var \Drupal\commerce_tax\TaxZone $a */
+      /** @var \Drupal\commerce_tax\TaxZone $b */
+      return strcmp($a->getLabel(), $b->getLabel());
+    });
+
     $element = [
       '#type' => 'details',
       '#title' => $this->t('Tax rates'),
@@ -292,26 +314,28 @@ abstract class LocalTaxTypeBase extends TaxTypeBase implements LocalTaxTypeInter
       ],
       '#input' => FALSE,
     ];
-    foreach ($this->getZones() as $tax_zone) {
-      $element['table']['zone-' . $tax_zone->getId()] = [
-        '#attributes' => [
-          'class' => ['region-title'],
-          'no_striping' => TRUE,
-        ],
-        'label' => [
-          '#markup' => $tax_zone->getLabel(),
-          '#wrapper_attributes' => ['colspan' => 3],
-        ],
-      ];
-      foreach ($tax_zone->getRates() as $tax_rate) {
+    foreach ($zones as $zone) {
+      if (count($zones) > 1) {
+        $element['table']['zone-' . $zone->getId()] = [
+          '#attributes' => [
+            'class' => ['region-title'],
+            'no_striping' => TRUE,
+          ],
+          'label' => [
+            '#markup' => $zone->getLabel(),
+            '#wrapper_attributes' => ['colspan' => 3],
+          ],
+        ];
+      }
+      foreach ($zone->getRates() as $rate) {
         $formatted_amounts = array_map(function ($amount) {
           /** @var \Drupal\commerce_tax\TaxRateAmount $amount */
           return $amount->toString();
-        }, $tax_rate->getAmounts());
+        }, $rate->getAmounts());
 
         $element['table'][] = [
-          'tax_rate' => [
-            '#markup' => $tax_rate->getLabel(),
+          'rate' => [
+            '#markup' => $rate->getLabel(),
           ],
           'amounts' => [
             '#markup' => implode('<br>', $formatted_amounts),
@@ -322,5 +346,24 @@ abstract class LocalTaxTypeBase extends TaxTypeBase implements LocalTaxTypeInter
 
     return $element;
   }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getZones() {
+    if (empty($this->zones)) {
+      $this->zones = $this->buildZones();
+    }
+
+    return $this->zones;
+  }
+
+  /**
+   * Builds the tax zones.
+   *
+   * @return \Drupal\commerce_tax\TaxZone[]
+   *   The tax zones.
+   */
+  abstract protected function buildZones();
 
 }

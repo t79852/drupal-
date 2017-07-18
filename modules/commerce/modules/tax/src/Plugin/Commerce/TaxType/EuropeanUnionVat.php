@@ -33,20 +33,6 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
   /**
    * {@inheritdoc}
    */
-  public function getDisplayLabel() {
-    return $this->t('VAT');
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function shouldRound() {
-    return TRUE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   protected function resolveZones(OrderItemInterface $order_item, ProfileInterface $customer_profile) {
     $zones = $this->getZones();
     $customer_address = $customer_profile->address->first();
@@ -80,7 +66,7 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
     // to Germany needs to have German VAT applied.
     $taxable_type = $this->getTaxableType($order_item);
     $year = $this->getCalculationDate($order)->format('Y');
-    $is_digital = $taxable_type == TaxableType::DIGITAL_GOODS && $year >= '2015';
+    $is_digital = $taxable_type == TaxableType::DIGITAL_GOODS && $year >= 2015;
     $resolved_zones = [];
     if (empty($store_zones) && !empty($store_registration_zones)) {
       // The store is not in the EU but is registered to collect VAT.
@@ -116,11 +102,24 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
   /**
    * {@inheritdoc}
    */
-  public function getZones() {
+  public function buildZones() {
+    // Avoid instantiating the same labels dozens of times.
+    $labels = [
+      'standard' => $this->t('Standard'),
+      'intermediate' => $this->t('Intermediate'),
+      'reduced' => $this->t('Reduced'),
+      'second_reduced' => $this->t('Second Reduced'),
+      'super_reduced' => $this->t('Super Reduced'),
+      'special' => $this->t('Special'),
+      'zero' => $this->t('Zero'),
+      'vat' => $this->t('VAT'),
+    ];
+
     $zones = [];
     $zones['at'] = new TaxZone([
       'id' => 'at',
       'label' => $this->t('Austria'),
+      'display_label' => $labels['vat'],
       'territories' => [
         // Austria without Jungholz and Mittelberg.
         ['country_code' => 'AT', 'excluded_postal_codes' => '6691, 6991:6993'],
@@ -128,7 +127,7 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
       'rates' => [
         [
           'id' => 'standard',
-          'label' => $this->t('Standard'),
+          'label' => $labels['standard'],
           'amounts' => [
             ['amount' => '0.2', 'start_date' => '1995-01-01'],
           ],
@@ -136,14 +135,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
         ],
         [
           'id' => 'intermediate',
-          'label' => $this->t('Intermediate'),
+          'label' => $labels['intermediate'],
           'amounts' => [
             ['amount' => '0.13', 'start_date' => '2016-01-01'],
           ],
         ],
         [
           'id' => 'reduced',
-          'label' => $this->t('Reduced'),
+          'label' => $labels['reduced'],
           'amounts' => [
             ['amount' => '0.1', 'start_date' => '1995-01-01'],
           ],
@@ -153,13 +152,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
     $zones['be'] = new TaxZone([
       'id' => 'be',
       'label' => $this->t('Belgium'),
+      'display_label' => $labels['vat'],
       'territories' => [
         ['country_code' => 'BE'],
       ],
       'rates' => [
         [
           'id' => 'standard',
-          'label' => $this->t('Standard'),
+          'label' => $labels['standard'],
           'amounts' => [
             ['amount' => '0.21', 'start_date' => '1996-01-01'],
           ],
@@ -167,21 +167,21 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
         ],
         [
           'id' => 'intermediate',
-          'label' => $this->t('Intermediate'),
+          'label' => $labels['intermediate'],
           'amounts' => [
             ['amount' => '0.12', 'start_date' => '1992-04-01'],
           ],
         ],
         [
           'id' => 'reduced',
-          'label' => $this->t('Reduced'),
+          'label' => $labels['reduced'],
           'amounts' => [
             ['amount' => '0.06', 'start_date' => '1971-01-01'],
           ],
         ],
         [
           'id' => 'zero',
-          'label' => $this->t('Zero'),
+          'label' => $labels['zero'],
           'amounts' => [
             ['amount' => '0', 'start_date' => '1971-01-01'],
           ],
@@ -191,13 +191,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
     $zones['bg'] = new TaxZone([
       'id' => 'bg',
       'label' => $this->t('Bulgaria'),
+      'display_label' => $labels['vat'],
       'territories' => [
         ['country_code' => 'BG'],
       ],
       'rates' => [
         [
           'id' => 'standard',
-          'label' => $this->t('Standard'),
+          'label' => $labels['standard'],
           'amounts' => [
             ['amount' => '0.2', 'start_date' => '2007-01-01'],
           ],
@@ -205,7 +206,7 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
         ],
         [
           'id' => 'reduced',
-          'label' => $this->t('Reduced'),
+          'label' => $labels['reduced'],
           'amounts' => [
             ['amount' => '0.09', 'start_date' => '2011-04-01'],
           ],
@@ -215,13 +216,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
     $zones['cy'] = new TaxZone([
       'id' => 'cy',
       'label' => $this->t('Cyprus'),
+      'display_label' => $labels['vat'],
       'territories' => [
         ['country_code' => 'CY'],
       ],
       'rates' => [
         [
           'id' => 'standard',
-          'label' => $this->t('Standard'),
+          'label' => $labels['standard'],
           'amounts' => [
             ['amount' => '0.19', 'start_date' => '2014-01-13'],
           ],
@@ -229,14 +231,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
         ],
         [
           'id' => 'intermediate',
-          'label' => $this->t('Intermediate'),
+          'label' => $labels['intermediate'],
           'amounts' => [
             ['amount' => '0.09', 'start_date' => '2014-01-13'],
           ],
         ],
         [
           'id' => 'reduced',
-          'label' => $this->t('Reduced'),
+          'label' => $labels['reduced'],
           'amounts' => [
             ['amount' => '0.05', 'start_date' => '2004-05-01'],
           ],
@@ -246,13 +248,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
     $zones['cz'] = new TaxZone([
       'id' => 'cz',
       'label' => $this->t('Czech Republic'),
+      'display_label' => $labels['vat'],
       'territories' => [
         ['country_code' => 'CZ'],
       ],
       'rates' => [
         [
           'id' => 'standard',
-          'label' => $this->t('Standard'),
+          'label' => $labels['standard'],
           'amounts' => [
             ['amount' => '0.21', 'start_date' => '2013-01-01'],
           ],
@@ -260,21 +263,21 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
         ],
         [
           'id' => 'reduced',
-          'label' => $this->t('Reduced'),
+          'label' => $labels['reduced'],
           'amounts' => [
             ['amount' => '0.15', 'start_date' => '2013-01-01'],
           ],
         ],
         [
           'id' => 'super_reduced',
-          'label' => $this->t('Super Reduced'),
+          'label' => $labels['super_reduced'],
           'amounts' => [
             ['amount' => '0.1', 'start_date' => '2015-01-01'],
           ],
         ],
         [
           'id' => 'zero',
-          'label' => $this->t('Zero'),
+          'label' => $labels['zero'],
           'amounts' => [
             ['amount' => '0', 'start_date' => '2004-05-01'],
           ],
@@ -284,6 +287,7 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
     $zones['de'] = new TaxZone([
       'id' => 'de',
       'label' => $this->t('Germany'),
+      'display_label' => $labels['vat'],
       'territories' => [
         // Germany without Heligoland and Büsingen.
         ['country_code' => 'DE', 'excluded_postal_codes' => '27498, 78266'],
@@ -293,7 +297,7 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
       'rates' => [
         [
           'id' => 'standard',
-          'label' => $this->t('Standard'),
+          'label' => $labels['standard'],
           'amounts' => [
             ['amount' => '0.19', 'start_date' => '2007-01-01'],
           ],
@@ -301,7 +305,7 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
         ],
         [
           'id' => 'reduced',
-          'label' => $this->t('Reduced'),
+          'label' => $labels['reduced'],
           'amounts' => [
             ['amount' => '0.07', 'start_date' => '1983-07-01'],
           ],
@@ -311,13 +315,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
     $zones['dk'] = new TaxZone([
       'id' => 'dk',
       'label' => $this->t('Denmark'),
+      'display_label' => $labels['vat'],
       'territories' => [
         ['country_code' => 'DK'],
       ],
       'rates' => [
         [
           'id' => 'standard',
-          'label' => $this->t('Standard'),
+          'label' => $labels['standard'],
           'amounts' => [
             ['amount' => '0.25', 'start_date' => '1992-01-01'],
           ],
@@ -325,7 +330,7 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
         ],
         [
           'id' => 'zero',
-          'label' => $this->t('Zero'),
+          'label' => $labels['zero'],
           'amounts' => [
             ['amount' => '0', 'start_date' => '1973-01-01'],
           ],
@@ -335,13 +340,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
     $zones['ee'] = new TaxZone([
       'id' => 'ee',
       'label' => $this->t('Estonia'),
+      'display_label' => $labels['vat'],
       'territories' => [
         ['country_code' => 'EE'],
       ],
       'rates' => [
         [
           'id' => 'standard',
-          'label' => $this->t('Standard'),
+          'label' => $labels['standard'],
           'amounts' => [
             ['amount' => '0.2', 'start_date' => '2009-07-01'],
           ],
@@ -349,7 +355,7 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
         ],
         [
           'id' => 'reduced',
-          'label' => $this->t('Reduced'),
+          'label' => $labels['reduced'],
           'amounts' => [
             ['amount' => '0.09', 'start_date' => '2009-01-01'],
           ],
@@ -359,6 +365,7 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
     $zones['es'] = new TaxZone([
       'id' => 'es',
       'label' => $this->t('Spain'),
+      'display_label' => $labels['vat'],
       'territories' => [
         // Spain without Canary Islands, Ceuta and Melilla.
         ['country_code' => 'ES', 'excluded_postal_codes' => '/(35|38|51|52)[0-9]{3}/'],
@@ -366,7 +373,7 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
       'rates' => [
         [
           'id' => 'standard',
-          'label' => $this->t('Standard'),
+          'label' => $labels['standard'],
           'amounts' => [
             ['amount' => '0.21', 'start_date' => '2012-09-01'],
           ],
@@ -374,14 +381,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
         ],
         [
           'id' => 'reduced',
-          'label' => $this->t('Reduced'),
+          'label' => $labels['reduced'],
           'amounts' => [
             ['amount' => '0.1', 'start_date' => '2012-09-01'],
           ],
         ],
         [
           'id' => 'super_reduced',
-          'label' => $this->t('Super Reduced'),
+          'label' => $labels['super_reduced'],
           'amounts' => [
             ['amount' => '0.04', 'start_date' => '1995-01-01'],
           ],
@@ -391,6 +398,7 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
     $zones['fi'] = new TaxZone([
       'id' => 'fi',
       'label' => $this->t('Finland'),
+      'display_label' => $labels['vat'],
       'territories' => [
         // Finland without Åland Islands.
         ['country_code' => 'FI', 'excluded_postal_codes' => '22000:22999'],
@@ -398,7 +406,7 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
       'rates' => [
         [
           'id' => 'standard',
-          'label' => $this->t('Standard'),
+          'label' => $labels['standard'],
           'amounts' => [
             ['amount' => '0.24', 'start_date' => '2013-01-01'],
           ],
@@ -406,14 +414,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
         ],
         [
           'id' => 'intermediate',
-          'label' => $this->t('Intermediate'),
+          'label' => $labels['intermediate'],
           'amounts' => [
             ['amount' => '0.14', 'start_date' => '2013-01-01'],
           ],
         ],
         [
           'id' => 'reduced',
-          'label' => $this->t('Reduced'),
+          'label' => $labels['reduced'],
           'amounts' => [
             ['amount' => '0.1', 'start_date' => '2013-01-01'],
           ],
@@ -423,6 +431,7 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
     $zones['fr'] = new TaxZone([
       'id' => 'fr',
       'label' => $this->t('France'),
+      'display_label' => $labels['vat'],
       'territories' => [
         // France without Corsica.
         ['country_code' => 'FR', 'excluded_postal_codes' => '/(20)[0-9]{3}/'],
@@ -431,7 +440,7 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
       'rates' => [
         [
           'id' => 'standard',
-          'label' => $this->t('Standard'),
+          'label' => $labels['standard'],
           'amounts' => [
             ['amount' => '0.2', 'start_date' => '2014-01-01'],
           ],
@@ -439,21 +448,21 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
         ],
         [
           'id' => 'intermediate',
-          'label' => $this->t('Intermediate'),
+          'label' => $labels['intermediate'],
           'amounts' => [
             ['amount' => '0.1', 'start_date' => '2014-01-01'],
           ],
         ],
         [
           'id' => 'reduced',
-          'label' => $this->t('Reduced'),
+          'label' => $labels['reduced'],
           'amounts' => [
             ['amount' => '0.055', 'start_date' => '1982-07-01'],
           ],
         ],
         [
           'id' => 'super_reduced',
-          'label' => $this->t('Super Reduced'),
+          'label' => $labels['super_reduced'],
           'amounts' => [
             ['amount' => '0.021', 'start_date' => '1986-07-01'],
           ],
@@ -463,6 +472,7 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
     $zones['fr_h'] = new TaxZone([
       'id' => 'fr_h',
       'label' => $this->t('France (Corsica)'),
+      'display_label' => $labels['vat'],
       'territories' => [
         // France without Corsica.
         ['country_code' => 'FR', 'included_postal_codes' => '/(20)[0-9]{3}/'],
@@ -470,7 +480,7 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
       'rates' => [
         [
           'id' => 'standard',
-          'label' => $this->t('Standard'),
+          'label' => $labels['standard'],
           'amounts' => [
             ['amount' => '0.2', 'start_date' => '2014-01-01'],
           ],
@@ -478,21 +488,21 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
         ],
         [
           'id' => 'special',
-          'label' => $this->t('Special'),
+          'label' => $labels['special'],
           'amounts' => [
             ['amount' => '0.1', 'start_date' => '2014-01-01'],
           ],
         ],
         [
           'id' => 'reduced',
-          'label' => $this->t('Reduced'),
+          'label' => $labels['reduced'],
           'amounts' => [
             ['amount' => '0.021', 'start_date' => '1997-09-01'],
           ],
         ],
         [
           'id' => 'super_reduced',
-          'label' => $this->t('Super Reduced'),
+          'label' => $labels['super_reduced'],
           'amounts' => [
             ['amount' => '0.009', 'start_date' => '1972-04-01'],
           ],
@@ -502,6 +512,7 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
     $zones['gb'] = new TaxZone([
       'id' => 'gb',
       'label' => $this->t('Great Britain'),
+      'display_label' => $labels['vat'],
       'territories' => [
         ['country_code' => 'GB'],
         ['country_code' => 'IM'],
@@ -509,7 +520,7 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
       'rates' => [
         [
           'id' => 'standard',
-          'label' => $this->t('Standard'),
+          'label' => $labels['standard'],
           'amounts' => [
             ['amount' => '0.2', 'start_date' => '2011-01-04'],
           ],
@@ -517,14 +528,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
         ],
         [
           'id' => 'reduced',
-          'label' => $this->t('Reduced'),
+          'label' => $labels['reduced'],
           'amounts' => [
             ['amount' => '0.05', 'start_date' => '1997-09-01'],
           ],
         ],
         [
           'id' => 'zero',
-          'label' => $this->t('Zero'),
+          'label' => $labels['zero'],
           'amounts' => [
             ['amount' => '0', 'start_date' => '1973-01-01'],
           ],
@@ -534,6 +545,7 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
     $zones['gr'] = new TaxZone([
       'id' => 'gr',
       'label' => $this->t('Greece'),
+      'display_label' => $labels['vat'],
       'territories' => [
         // Greece without Thassos, Samothrace, Skiros, Northern Sporades, Lesbos, Chios, The Cyclades, The Dodecanese.
         ['country_code' => 'GR', 'excluded_postal_codes' => '/640 ?04|680 ?02|340 ?07|((370|811|821|840|851) ?[0-9]{2})/'],
@@ -541,7 +553,7 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
       'rates' => [
         [
           'id' => 'standard',
-          'label' => $this->t('Standard'),
+          'label' => $labels['standard'],
           'amounts' => [
             ['amount' => '0.23', 'start_date' => '2010-07-01', 'end_date' => '2015-05-31'],
             ['amount' => '0.24', 'start_date' => '2016-06-01'],
@@ -550,14 +562,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
         ],
         [
           'id' => 'intermediate',
-          'label' => $this->t('Intermediate'),
+          'label' => $labels['intermediate'],
           'amounts' => [
             ['amount' => '0.13', 'start_date' => '2011-01-01'],
           ],
         ],
         [
           'id' => 'reduced',
-          'label' => $this->t('Reduced'),
+          'label' => $labels['reduced'],
           'amounts' => [
             ['amount' => '0.06', 'start_date' => '2015-07-01'],
           ],
@@ -567,13 +579,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
     $zones['hr'] = new TaxZone([
       'id' => 'hr',
       'label' => $this->t('Croatia'),
+      'display_label' => $labels['vat'],
       'territories' => [
         ['country_code' => 'HR'],
       ],
       'rates' => [
         [
           'id' => 'standard',
-          'label' => $this->t('Standard'),
+          'label' => $labels['standard'],
           'amounts' => [
             ['amount' => '0.25', 'start_date' => '2013-07-01'],
           ],
@@ -581,21 +594,21 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
         ],
         [
           'id' => 'reduced',
-          'label' => $this->t('Reduced'),
+          'label' => $labels['reduced'],
           'amounts' => [
             ['amount' => '0.13', 'start_date' => '2014-01-01'],
           ],
         ],
         [
           'id' => 'super_reduced',
-          'label' => $this->t('Super Reduced'),
+          'label' => $labels['super_reduced'],
           'amounts' => [
             ['amount' => '0.05', 'start_date' => '2014-01-01'],
           ],
         ],
         [
           'id' => 'zero',
-          'label' => $this->t('Zero'),
+          'label' => $labels['zero'],
           'amounts' => [
             ['amount' => '0', 'start_date' => '2013-07-01'],
           ],
@@ -605,13 +618,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
     $zones['hu'] = new TaxZone([
       'id' => 'hu',
       'label' => $this->t('Hungary'),
+      'display_label' => $labels['vat'],
       'territories' => [
         ['country_code' => 'HU'],
       ],
       'rates' => [
         [
           'id' => 'standard',
-          'label' => $this->t('Standard'),
+          'label' => $labels['standard'],
           'amounts' => [
             ['amount' => '0.27', 'start_date' => '2012-01-01'],
           ],
@@ -619,14 +633,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
         ],
         [
           'id' => 'intermediate',
-          'label' => $this->t('Intermediate'),
+          'label' => $labels['intermediate'],
           'amounts' => [
             ['amount' => '0.18', 'start_date' => '2009-07-01'],
           ],
         ],
         [
           'id' => 'reduced',
-          'label' => $this->t('Reduced'),
+          'label' => $labels['reduced'],
           'amounts' => [
             ['amount' => '0.05', 'start_date' => '2004-05-01'],
           ],
@@ -636,13 +650,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
     $zones['ie'] = new TaxZone([
       'id' => 'ie',
       'label' => $this->t('Ireland'),
+      'display_label' => $labels['vat'],
       'territories' => [
         ['country_code' => 'IE'],
       ],
       'rates' => [
         [
           'id' => 'standard',
-          'label' => $this->t('Standard'),
+          'label' => $labels['standard'],
           'amounts' => [
             ['amount' => '0.23', 'start_date' => '2012-01-01'],
           ],
@@ -650,28 +665,28 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
         ],
         [
           'id' => 'reduced',
-          'label' => $this->t('Reduced'),
+          'label' => $labels['reduced'],
           'amounts' => [
             ['amount' => '0.135', 'start_date' => '2003-01-01'],
           ],
         ],
         [
           'id' => 'second_reduced',
-          'label' => $this->t('Second Reduced'),
+          'label' => $labels['second_reduced'],
           'amounts' => [
             ['amount' => '0.09', 'start_date' => '2011-07-01'],
           ],
         ],
         [
           'id' => 'super_reduced',
-          'label' => $this->t('Super Reduced'),
+          'label' => $labels['super_reduced'],
           'amounts' => [
             ['amount' => '0.048', 'start_date' => '2005-01-01'],
           ],
         ],
         [
           'id' => 'zero',
-          'label' => $this->t('Zero'),
+          'label' => $labels['zero'],
           'amounts' => [
             ['amount' => '0', 'start_date' => '1972-04-01'],
           ],
@@ -681,6 +696,7 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
     $zones['it'] = new TaxZone([
       'id' => 'it',
       'label' => $this->t('Italy'),
+      'display_label' => $labels['vat'],
       'territories' => [
         // Italy without Livigno, Campione d’Italia and Lake Lugano.
         ['country_code' => 'IT', 'excluded_postal_codes' => '23030, 22060'],
@@ -688,7 +704,7 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
       'rates' => [
         [
           'id' => 'standard',
-          'label' => $this->t('Standard'),
+          'label' => $labels['standard'],
           'amounts' => [
             ['amount' => '0.22', 'start_date' => '2013-10-01'],
           ],
@@ -696,14 +712,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
         ],
         [
           'id' => 'reduced',
-          'label' => $this->t('Reduced'),
+          'label' => $labels['reduced'],
           'amounts' => [
             ['amount' => '0.1', 'start_date' => '1995-02-24'],
           ],
         ],
         [
           'id' => 'super_reduced',
-          'label' => $this->t('Super Reduced'),
+          'label' => $labels['super_reduced'],
           'amounts' => [
             ['amount' => '0.04', 'start_date' => '1989-01-01'],
           ],
@@ -713,13 +729,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
     $zones['lt'] = new TaxZone([
       'id' => 'lt',
       'label' => $this->t('Lithuania'),
+      'display_label' => $labels['vat'],
       'territories' => [
         ['country_code' => 'LT'],
       ],
       'rates' => [
         [
           'id' => 'standard',
-          'label' => $this->t('Standard'),
+          'label' => $labels['standard'],
           'amounts' => [
             ['amount' => '0.21', 'start_date' => '2009-09-01'],
           ],
@@ -727,14 +744,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
         ],
         [
           'id' => 'intermediate',
-          'label' => $this->t('Intermediate'),
+          'label' => $labels['intermediate'],
           'amounts' => [
             ['amount' => '0.09', 'start_date' => '2004-05-01'],
           ],
         ],
         [
           'id' => 'reduced',
-          'label' => $this->t('Reduced'),
+          'label' => $labels['reduced'],
           'amounts' => [
             ['amount' => '0.05', 'start_date' => '2004-05-01'],
           ],
@@ -744,13 +761,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
     $zones['lu'] = new TaxZone([
       'id' => 'lu',
       'label' => $this->t('Luxembourg'),
+      'display_label' => $labels['vat'],
       'territories' => [
         ['country_code' => 'LU'],
       ],
       'rates' => [
         [
           'id' => 'standard',
-          'label' => $this->t('Standard'),
+          'label' => $labels['standard'],
           'amounts' => [
             ['amount' => '0.17', 'start_date' => '2015-01-01'],
           ],
@@ -758,21 +776,21 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
         ],
         [
           'id' => 'intermediate',
-          'label' => $this->t('Intermediate'),
+          'label' => $labels['intermediate'],
           'amounts' => [
             ['amount' => '0.14', 'start_date' => '2015-01-01'],
           ],
         ],
         [
           'id' => 'reduced',
-          'label' => $this->t('Reduced'),
+          'label' => $labels['reduced'],
           'amounts' => [
             ['amount' => '0.08', 'start_date' => '2015-01-01'],
           ],
         ],
         [
           'id' => 'super_reduced',
-          'label' => $this->t('Super Reduced'),
+          'label' => $labels['super_reduced'],
           'amounts' => [
             ['amount' => '0.03', 'start_date' => '1983-07-01'],
           ],
@@ -782,13 +800,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
     $zones['lv'] = new TaxZone([
       'id' => 'lv',
       'label' => $this->t('Latvia'),
+      'display_label' => $labels['vat'],
       'territories' => [
         ['country_code' => 'LV'],
       ],
       'rates' => [
         [
           'id' => 'standard',
-          'label' => $this->t('Standard'),
+          'label' => $labels['standard'],
           'amounts' => [
             ['amount' => '0.21', 'start_date' => '2012-07-01'],
           ],
@@ -796,7 +815,7 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
         ],
         [
           'id' => 'reduced',
-          'label' => $this->t('Reduced'),
+          'label' => $labels['reduced'],
           'amounts' => [
             ['amount' => '0.12', 'start_date' => '2011-01-01'],
           ],
@@ -806,13 +825,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
     $zones['mt'] = new TaxZone([
       'id' => 'mt',
       'label' => $this->t('Malta'),
+      'display_label' => $labels['vat'],
       'territories' => [
         ['country_code' => 'MT'],
       ],
       'rates' => [
         [
           'id' => 'standard',
-          'label' => $this->t('Standard'),
+          'label' => $labels['standard'],
           'amounts' => [
             ['amount' => '0.18', 'start_date' => '2004-05-01'],
           ],
@@ -820,14 +840,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
         ],
         [
           'id' => 'intermediate',
-          'label' => $this->t('Intermediate'),
+          'label' => $labels['intermediate'],
           'amounts' => [
             ['amount' => '0.07', 'start_date' => '2011-01-01'],
           ],
         ],
         [
           'id' => 'reduced',
-          'label' => $this->t('Reduced'),
+          'label' => $labels['reduced'],
           'amounts' => [
             ['amount' => '0.05', 'start_date' => '2004-05-01'],
           ],
@@ -837,13 +857,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
     $zones['nl'] = new TaxZone([
       'id' => 'nl',
       'label' => $this->t('Netherlands'),
+      'display_label' => $labels['vat'],
       'territories' => [
         ['country_code' => 'NL'],
       ],
       'rates' => [
         [
           'id' => 'standard',
-          'label' => $this->t('Standard'),
+          'label' => $labels['standard'],
           'amounts' => [
             ['amount' => '0.21', 'start_date' => '2012-10-01'],
           ],
@@ -851,7 +872,7 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
         ],
         [
           'id' => 'reduced',
-          'label' => $this->t('Reduced'),
+          'label' => $labels['reduced'],
           'amounts' => [
             ['amount' => '0.06', 'start_date' => '1986-10-01'],
           ],
@@ -861,28 +882,29 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
     $zones['pl'] = new TaxZone([
       'id' => 'pl',
       'label' => $this->t('Poland'),
+      'display_label' => $labels['vat'],
       'territories' => [
         ['country_code' => 'PL'],
       ],
       'rates' => [
         [
           'id' => 'standard',
-          'label' => $this->t('Standard'),
+          'label' => $labels['standard'],
           'amounts' => [
-            ['amount' => '0.22', 'start_date' => '2016-01-01'],
+            ['amount' => '0.23', 'start_date' => '2011-01-01'],
           ],
           'default' => TRUE,
         ],
         [
           'id' => 'intermediate',
-          'label' => $this->t('Intermediate'),
+          'label' => $labels['intermediate'],
           'amounts' => [
             ['amount' => '0.08', 'start_date' => '2011-01-01'],
           ],
         ],
         [
           'id' => 'reduced',
-          'label' => $this->t('Reduced'),
+          'label' => $labels['reduced'],
           'amounts' => [
             ['amount' => '0.05', 'start_date' => '2011-01-01'],
           ],
@@ -892,6 +914,7 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
     $zones['pt'] = new TaxZone([
       'id' => 'pt',
       'label' => $this->t('Portugal'),
+      'display_label' => $labels['vat'],
       'territories' => [
         // Portugal without Azores and Madeira.
         ['country_code' => 'PT', 'excluded_postal_codes' => '/(9)[0-9]{3}-[0-9]{3}/'],
@@ -899,7 +922,7 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
       'rates' => [
         [
           'id' => 'standard',
-          'label' => $this->t('Standard'),
+          'label' => $labels['standard'],
           'amounts' => [
             ['amount' => '0.23', 'start_date' => '2011-01-01'],
           ],
@@ -907,14 +930,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
         ],
         [
           'id' => 'intermediate',
-          'label' => $this->t('Intermediate'),
+          'label' => $labels['intermediate'],
           'amounts' => [
             ['amount' => '0.13', 'start_date' => '2010-07-01'],
           ],
         ],
         [
           'id' => 'reduced',
-          'label' => $this->t('Reduced'),
+          'label' => $labels['reduced'],
           'amounts' => [
             ['amount' => '0.06', 'start_date' => '2010-07-01'],
           ],
@@ -924,13 +947,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
     $zones['pt_30'] = new TaxZone([
       'id' => 'pt_30',
       'label' => $this->t('Portugal (Madeira)'),
+      'display_label' => $labels['vat'],
       'territories' => [
         ['country_code' => 'PT', 'included_postal_codes' => '/(9)[5-9][0-9]{2}-[0-9]{3}/'],
       ],
       'rates' => [
         [
           'id' => 'standard',
-          'label' => $this->t('Standard'),
+          'label' => $labels['standard'],
           'amounts' => [
             ['amount' => '0.22', 'start_date' => '2012-04-01'],
           ],
@@ -938,14 +962,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
         ],
         [
           'id' => 'intermediate',
-          'label' => $this->t('Intermediate'),
+          'label' => $labels['intermediate'],
           'amounts' => [
             ['amount' => '0.12', 'start_date' => '2012-04-01'],
           ],
         ],
         [
           'id' => 'reduced',
-          'label' => $this->t('Reduced'),
+          'label' => $labels['reduced'],
           'amounts' => [
             ['amount' => '0.05', 'start_date' => '2012-04-01'],
           ],
@@ -955,13 +979,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
     $zones['ro'] = new TaxZone([
       'id' => 'ro',
       'label' => $this->t('Romania'),
+      'display_label' => $labels['vat'],
       'territories' => [
         ['country_code' => 'RO'],
       ],
       'rates' => [
         [
           'id' => 'standard',
-          'label' => $this->t('Standard'),
+          'label' => $labels['standard'],
           'amounts' => [
             ['amount' => '0.20', 'start_date' => '2016-01-01', 'end_date' => '2016-12-31'],
             ['amount' => '0.19', 'start_date' => '2017-01-01'],
@@ -970,14 +995,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
         ],
         [
           'id' => 'intermediate',
-          'label' => $this->t('Intermediate'),
+          'label' => $labels['intermediate'],
           'amounts' => [
             ['amount' => '0.09', 'start_date' => '2008-12-01'],
           ],
         ],
         [
           'id' => 'reduced',
-          'label' => $this->t('Reduced'),
+          'label' => $labels['reduced'],
           'amounts' => [
             ['amount' => '0.05', 'start_date' => '2008-12-01'],
           ],
@@ -987,13 +1012,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
     $zones['se'] = new TaxZone([
       'id' => 'se',
       'label' => $this->t('Sweden'),
+      'display_label' => $labels['vat'],
       'territories' => [
         ['country_code' => 'SE'],
       ],
       'rates' => [
         [
           'id' => 'standard',
-          'label' => $this->t('Standard'),
+          'label' => $labels['standard'],
           'amounts' => [
             ['amount' => '0.25', 'start_date' => '1995-01-01'],
           ],
@@ -1001,14 +1027,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
         ],
         [
           'id' => 'intermediate',
-          'label' => $this->t('Intermediate'),
+          'label' => $labels['intermediate'],
           'amounts' => [
             ['amount' => '0.12', 'start_date' => '1995-01-01'],
           ],
         ],
         [
           'id' => 'reduced',
-          'label' => $this->t('Reduced'),
+          'label' => $labels['reduced'],
           'amounts' => [
             ['amount' => '0.06', 'start_date' => '1996-01-01'],
           ],
@@ -1018,13 +1044,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
     $zones['si'] = new TaxZone([
       'id' => 'si',
       'label' => $this->t('Slovenia'),
+      'display_label' => $labels['vat'],
       'territories' => [
         ['country_code' => 'SI'],
       ],
       'rates' => [
         [
           'id' => 'standard',
-          'label' => $this->t('Standard'),
+          'label' => $labels['standard'],
           'amounts' => [
             ['amount' => '0.22', 'start_date' => '2013-07-01'],
           ],
@@ -1032,7 +1059,7 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
         ],
         [
           'id' => 'reduced',
-          'label' => $this->t('Reduced'),
+          'label' => $labels['reduced'],
           'amounts' => [
             ['amount' => '0.095', 'start_date' => '2013-07-01'],
           ],
@@ -1042,13 +1069,14 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
     $zones['sk'] = new TaxZone([
       'id' => 'sk',
       'label' => $this->t('Slovakia'),
+      'display_label' => $labels['vat'],
       'territories' => [
-        ['country_code' => 'SE'],
+        ['country_code' => 'SK'],
       ],
       'rates' => [
         [
           'id' => 'standard',
-          'label' => $this->t('Standard'),
+          'label' => $labels['standard'],
           'amounts' => [
             ['amount' => '0.2', 'start_date' => '2011-01-01'],
           ],
@@ -1056,7 +1084,7 @@ class EuropeanUnionVat extends LocalTaxTypeBase {
         ],
         [
           'id' => 'reduced',
-          'label' => $this->t('Reduced'),
+          'label' => $labels['reduced'],
           'amounts' => [
             ['amount' => '0.1', 'start_date' => '2011-01-01'],
           ],
